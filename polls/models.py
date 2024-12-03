@@ -28,10 +28,9 @@ class Choice(models.Model):
         return self.choice_text
 
 
-# Nuevo modelo Categoria
-class Categoria(models.Model):
-    Abr = models.CharField(max_length=4)  # Abreviatura de la categoría
-    Nombre = models.CharField(max_length=50)  # Nombre completo de la categoría
+class categoria(models.Model):  # En minúsculas
+    Abr = models.CharField(max_length=4)
+    Nombre = models.CharField(max_length=50)
 
     def __str__(self):
         return f"{self.Abr} - {self.Nombre}"
