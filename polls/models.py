@@ -28,9 +28,4 @@ class Choice(models.Model):
         return self.choice_text
 
 
-class categoria(models.Model):  # En minúsculas
-    Abr = models.CharField(max_length=4)
-    Nombre = models.CharField(max_length=50)
 
-    def __str__(self):
-        return f"{self.Abr} - {self.Nombre}"

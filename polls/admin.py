@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Choice, Question, categoria
+from .models import Choice, Question
 
 
 class ChoiceInline(admin.TabularInline):
@@ -19,4 +19,3 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Question, QuestionAdmin)
-admin.site.register(categoria)  # Aquí estamos registrando el modelo Categoria
