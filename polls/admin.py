@@ -2,21 +2,11 @@ from django.contrib import admin
 from .models import Choice, Question, Categoria
 
 
-class ChoiceInline(admin.TabularInline):
-    model = Choice
-    extra = 3
+class CategoriaAdmin(admin.ModelAdmin):
+    list_display = ('Abr', 'Nombre', 'Cantidad')  # Mostrar estos campos en el admin
+    search_fields = ('Abr', 'Nombre')  # Opcional: Hacer estos campos buscables
 
 
-class QuestionAdmin(admin.ModelAdmin):
-    fieldsets = [
-        (None,               {'fields': ['question_text']}),
-        ('Date information', {'fields': ['pub_date'], 'classes': ['collapse']}),
-    ]
-    inlines = [ChoiceInline]
-    list_display = ('question_text', 'pub_date', 'was_published_recently')
-    list_filter = ['pub_date']
-    search_fields = ['question_text']
-
-
-admin.site.register(Question, QuestionAdmin)
-admin.site.register(Categoria)
+admin.site.register(Question)
+admin.site.register(Choice)
+admin.site.register(Categoria, CategoriaAdmin)

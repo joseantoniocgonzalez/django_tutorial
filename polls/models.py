@@ -28,9 +28,10 @@ class Choice(models.Model):
         return self.choice_text
 
 
-class Categoria(models.Model):	
-  	Abr = models.CharField(max_length=4)
-  	Nombre = models.CharField(max_length=50)
+class Categoria(models.Model):  
+    Abr = models.CharField(max_length=4)  # Abreviatura de la categoría
+    Nombre = models.CharField(max_length=50)  # Nombre completo de la categoría
+    Cantidad = models.IntegerField(default=0)  # Nuevo atributo con valor por defecto
 
-  	def __str__(self):
-  		return self.Abr+" - "+self.Nombre
+    def __str__(self):
+        return f"{self.Abr} - {self.Nombre} (Cantidad: {self.Cantidad})"
