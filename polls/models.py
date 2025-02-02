@@ -2,9 +2,10 @@ import datetime
 from django.db import models
 from django.utils import timezone
 
+
 class Question(models.Model):
     question_text = models.CharField(max_length=200)
-    pub_date = models.DateTimeField('date published')
+    pub_date = models.DateTimeField("date published")
 
     def __str__(self):
         return self.question_text
@@ -12,9 +13,11 @@ class Question(models.Model):
     def was_published_recently(self):
         now = timezone.now()
         return now - datetime.timedelta(days=1) <= self.pub_date <= now
-    was_published_recently.admin_order_field = 'pub_date'
+
+    was_published_recently.admin_order_field = "pub_date"
     was_published_recently.boolean = True
-    was_published_recently.short_description = 'Published recently?'
+    was_published_recently.short_description = "Published recently?"
+
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
@@ -23,3 +26,12 @@ class Choice(models.Model):
 
     def __str__(self):
         return self.choice_text
+
+
+class Categoria(models.Model):
+    Abr = models.CharField(max_length=4)
+    Nombre = models.CharField(max_length=50)
+    Cantidad = models.IntegerField(default=0)  # Nuevo campo con valor por defecto 0
+
+    def __str__(self):
+        return f"{self.Abr} - {self.Nombre} ({self.Cantidad})"
