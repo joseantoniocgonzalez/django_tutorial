@@ -2,10 +2,10 @@ pipeline {
     agent none
 
     environment {
-        IMAGE_NAME = "joseantoniocgonzalez/django-polls"  // Nombre de la imagen en Docker Hub
-        VPS_USER = "jose"  // Usuario correcto del VPS
-        VPS_HOST = "217.72.207.210"  // IP del VPS
-        PROJECT_PATH = "/home/jose/app"  // Ruta donde está docker-compose en el VPS
+        IMAGE_NAME = "joseantoniocgonzalez/django-polls"
+        VPS_USER = "jose"
+        VPS_HOST = "217.72.207.210"
+        PROJECT_PATH = "/home/jose/app"  // Asegúrate de que este directorio existe en el VPS
     }
 
     stages {
@@ -67,7 +67,7 @@ pipeline {
                             echo "📤 Subiendo la imagen a Docker Hub..."
                             docker push $IMAGE_NAME
                             
-                            echo "🗑️ Eliminando la imagen local para ahorrar espacio..."
+                            echo "🗑️ Eliminando la imagen local..."
                             docker rmi $IMAGE_NAME
                         '''
                     }
@@ -84,17 +84,23 @@ pipeline {
                             echo "🔍 Verificando conexión SSH con $VPS_USER@$VPS_HOST"
                             ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'EOF'
                                 echo "🛠️ Desplegando en el VPS..."
-                                cd $PROJECT_PATH
                                 
+                                if [ ! -f "$PROJECT_PATH/docker-compose.yaml" ]; then
+                                    echo "❌ ERROR: No se encontró el archivo docker-compose.yaml en $PROJECT_PATH"
+                                    exit 1
+                                fi
+                                
+                                cd $PROJECT_PATH
+
                                 echo "🛑 Deteniendo contenedores antiguos..."
                                 docker-compose down
-                                
+
                                 echo "🔄 Descargando la nueva imagen..."
-                                docker pull $IMAGE_NAME
-                                
+                                docker pull ${IMAGE_NAME} || { echo "❌ ERROR: Falló docker pull"; exit 1; }
+
                                 echo "🚀 Iniciando nuevo contenedor..."
-                                docker-compose up -d --build
-                                
+                                docker-compose up -d --build || { echo "❌ ERROR: Falló docker-compose up"; exit 1; }
+
                                 echo "✅ Despliegue finalizado correctamente."
                             EOF
                         '''
