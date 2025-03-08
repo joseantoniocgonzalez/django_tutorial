@@ -81,14 +81,20 @@ pipeline {
                 script {
                     withCredentials([sshUserPrivateKey(credentialsId: 'vps-ssh-credentials', keyFileVariable: 'SSH_KEY')]) {
                         sh '''
-                            echo "🔍 Verificando SSH: Intentando conectar con $VPS_USER@$VPS_HOST"
-                            echo "🔑 Listando clave SSH disponible en Jenkins..."
-                            ls -l $SSH_KEY  # Verifica si la clave SSH está accesible en Jenkins
+                            echo "🔍 Verificando SSH: Intentando conectar con usuario: $VPS_USER@$VPS_HOST"
+                            echo "🔑 Clave SSH usada por Jenkins: $SSH_KEY"
+
+                            echo "🔍 Verificando si la clave SSH existe en Jenkins..."
+                            if [ ! -f "$SSH_KEY" ]; then
+                                echo "❌ ERROR: No se encontró la clave SSH en Jenkins"
+                                exit 1
+                            fi
+                            echo "✅ Clave SSH encontrada en Jenkins"
 
                             echo "🚀 Iniciando conexión SSH al VPS..."
                             ssh -vvv -i $SSH_KEY -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
-                                echo "📌 Conexión SSH exitosa. Desplegando la nueva versión..."
-                                
+                                echo "✅ Conexión SSH exitosa con el usuario: \$(whoami)"
+
                                 cd $PROJECT_PATH
                                 echo "🛑 Deteniendo contenedor existente..."
                                 docker-compose down
@@ -116,3 +122,4 @@ pipeline {
         }
     }
 }
+
