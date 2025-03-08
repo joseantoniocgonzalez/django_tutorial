@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         IMAGE_NAME = "joseantoniocgonzalez/django-polls"  // 🔴 Nombre de la imagen en Docker Hub
-        VPS_USER = "jose"  // 🔴 Asegúrate de que sea el usuario correcto de tu VPS
-        VPS_HOST = "217.72.207.210"  // 🔴 Reemplaza con la IP de tu VPS
+        VPS_USER = "jose"  // 🔴 Usuario correcto del VPS
+        VPS_HOST = "217.72.207.210"  // 🔴 IP del VPS
         PROJECT_PATH = "/home/jose/app"  // 🔴 Ruta donde está el docker-compose en el VPS
     }
 
@@ -74,7 +74,11 @@ pipeline {
                 script {
                     withCredentials([sshUserPrivateKey(credentialsId: 'vps-ssh-credentials', keyFileVariable: 'SSH_KEY')]) {
                         sh '''
-                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
+                            echo "🔍 Verificando SSH: Intentando conectar con $VPS_USER@$VPS_HOST usando clave en $SSH_KEY"
+                            ls -l $SSH_KEY  # Verifica si la clave SSH está disponible en Jenkins
+                            
+                            echo "🚀 Iniciando conexión SSH con modo depuración..."
+                            ssh -vvv -i $SSH_KEY -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
                                 cd $PROJECT_PATH
                                 docker-compose down
                                 docker pull $IMAGE_NAME
