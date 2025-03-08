@@ -3,12 +3,12 @@ pipeline {
 
     environment {
         DOCKER_HUB_USER = 'er.joselin@gmail.com'
-        IMAGE_NAME = "erjoselin/django-polls"  // Ajusta el nombre de la imagen si es necesario
-        DOCKER_HUB_PASSWORD = credentials('docker-hub-credentials') // Usa la credencial de Jenkins
+        IMAGE_NAME = "erjoselin/django-polls"
+        DOCKER_HUB_PASSWORD = credentials('docker-hub-credentials')
     }
 
     stages {
-        stage('Clone') {
+        stage('Clone Repository') {
             agent {
                 docker {
                     image 'python:3'
@@ -28,7 +28,10 @@ pipeline {
                 }
             }
             steps {
-                sh 'pip install -r requirements.txt'
+                sh '''
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
             }
         }
 
@@ -40,7 +43,11 @@ pipeline {
                 }
             }
             steps {
-                sh 'python3 manage.py test'
+                sh '''
+                    pip install --upgrade pip
+                    pip install -r requirements.txt  # Asegurar que las dependencias están instaladas en el contenedor de pruebas
+                    python3 manage.py test
+                '''
             }
         }
 
@@ -51,16 +58,9 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        # Construir la imagen Docker
                         docker build -t $IMAGE_NAME .
-
-                        # Iniciar sesión en Docker Hub de manera segura
                         echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USER --password-stdin
-
-                        # Subir la imagen
                         docker push $IMAGE_NAME
-
-                        # Eliminar la imagen local después de subirla
                         docker rmi $IMAGE_NAME
                     '''
                 }
