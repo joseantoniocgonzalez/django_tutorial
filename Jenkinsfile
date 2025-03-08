@@ -3,9 +3,9 @@ pipeline {
 
     environment {
         IMAGE_NAME = "joseantoniocgonzalez/django-polls"
-        VPS_USER = "jose"  // Usuario correcto del VPS
-        VPS_HOST = "217.72.207.210"  // IP del VPS
-        PROJECT_PATH = "/home/jose/app"  // Ruta donde está docker-compose en el VPS
+        VPS_USER = "jose"
+        VPS_HOST = "217.72.207.210"
+        PROJECT_PATH = "/home/jose/app"
     }
 
     stages {
@@ -72,15 +72,17 @@ pipeline {
             agent any
             steps {
                 script {
-                    sh '''
+                    sh """
                         echo "🔍 Verificando conexión SSH con $VPS_USER@$VPS_HOST"
-                        ssh -i "/var/lib/jenkins/.ssh/id_rsa" -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
+                        ssh -i "/var/lib/jenkins/.ssh/id_rsa" -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'EOF'
+                            echo "🛠️ Desplegando en el VPS..."
                             cd $PROJECT_PATH
                             docker-compose down
                             docker pull $IMAGE_NAME
                             docker-compose up -d --build
-                        EOF
-                    '''
+                            echo "✅ Despliegue finalizado correctamente."
+EOF
+                    """
                 }
             }
         }
