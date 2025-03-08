@@ -2,8 +2,8 @@ pipeline {
     agent none
 
     environment {
-        DOCKER_HUB_USER = 'er.joselin@gmail.com'
-        IMAGE_NAME = "erjoselin/django-polls"
+        DOCKER_HUB_USER = 'joseantoniocgonzalez'  // 🔴 Corrección: Cambiado el email por el usuario correcto
+        IMAGE_NAME = "joseantoniocgonzalez/django-polls"  // 🔴 Asegúrate de que el nombre de la imagen es correcto
         DOCKER_HUB_PASSWORD = credentials('docker-hub-credentials')
     }
 
