@@ -2,10 +2,10 @@ pipeline {
     agent none
 
     environment {
-        IMAGE_NAME = "joseantoniocgonzalez/django-polls"  // Nombre de la imagen en Docker Hub
+        IMAGE_NAME = "joseantoniocgonzalez/django-polls"
         VPS_USER = "jose"  // Usuario correcto del VPS
         VPS_HOST = "217.72.207.210"  // IP del VPS
-        PROJECT_PATH = "/home/jose/app"  // Ruta donde está el docker-compose en el VPS
+        PROJECT_PATH = "/home/jose/app"  // Ruta donde está docker-compose en el VPS
     }
 
     stages {
@@ -58,16 +58,9 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                         sh '''
-                            echo "🔨 Construyendo la imagen Docker..."
                             docker build -t $IMAGE_NAME .
-
-                            echo "🔐 Iniciando sesión en Docker Hub..."
                             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
-
-                            echo "📤 Subiendo la imagen a Docker Hub..."
                             docker push $IMAGE_NAME
-
-                            echo "🗑️ Eliminando la imagen local para liberar espacio..."
                             docker rmi $IMAGE_NAME
                         '''
                     }
@@ -79,33 +72,15 @@ pipeline {
             agent any
             steps {
                 script {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'vps-ssh-credentials', keyFileVariable: 'SSH_KEY')]) {
-                        sh '''
-                            echo "🔑 Guardando clave SSH en archivo temporal..."
-                            echo "$SSH_KEY" > /tmp/jenkins_ssh_key
-                            chmod 600 /tmp/jenkins_ssh_key
-
-                            echo "🔍 Verificando SSH: Intentando conectar con usuario: $VPS_USER@$VPS_HOST"
-                            ssh -vvv -i /tmp/jenkins_ssh_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
-                                echo "✅ Conexión SSH exitosa con el usuario: \$(whoami)"
-
-                                cd $PROJECT_PATH
-                                echo "🛑 Deteniendo contenedor existente..."
-                                docker-compose down
-
-                                echo "📥 Descargando la última imagen desde Docker Hub..."
-                                docker pull $IMAGE_NAME
-
-                                echo "🚀 Levantando el nuevo contenedor..."
-                                docker-compose up -d --build
-
-                                echo "✅ Despliegue finalizado en el VPS."
-                            EOF
-
-                            echo "🗑️ Eliminando clave SSH temporal..."
-                            rm -f /tmp/jenkins_ssh_key
-                        '''
-                    }
+                    sh '''
+                        echo "🔍 Verificando conexión SSH con $VPS_USER@$VPS_HOST"
+                        ssh -i "/var/lib/jenkins/.ssh/id_rsa" -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
+                            cd $PROJECT_PATH
+                            docker-compose down
+                            docker pull $IMAGE_NAME
+                            docker-compose up -d --build
+                        EOF
+                    '''
                 }
             }
         }
@@ -114,9 +89,8 @@ pipeline {
     post {
         always {
             mail to: 'er.joselin@gmail.com',
-                 subject: "✅ Pipeline Finalizado con Éxito",
-                 body: "El pipeline de Jenkins ha finalizado correctamente. Revisa los logs para más detalles."
+                 subject: "Pipeline Finalizado",
+                 body: "El pipeline de Jenkins ha finalizado. Revisa los logs para más detalles."
         }
     }
 }
-
