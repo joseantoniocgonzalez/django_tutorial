@@ -52,9 +52,7 @@ pipeline {
         }
 
         stage('Build and Push Docker Image') {
-            agent {
-                label 'principal'
-            }
+            agent any  // Permite que esta etapa se ejecute en cualquier nodo disponible
             steps {
                 script {
                     sh '''
