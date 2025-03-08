@@ -2,7 +2,10 @@ pipeline {
     agent none
 
     environment {
-        IMAGE_NAME = "joseantoniocgonzalez/django-polls"  // 🔴 Asegúrate de que el nombre de la imagen es correcto
+        IMAGE_NAME = "joseantoniocgonzalez/django-polls"  // 🔴 Nombre de la imagen en Docker Hub
+        VPS_USER = "jose"  // 🔴 Asegúrate de que sea el usuario correcto de tu VPS
+        VPS_HOST = "217.72.207.210"  // 🔴 Reemplaza con la IP de tu VPS
+        PROJECT_PATH = "/home/jose/app"  // 🔴 Ruta donde está el docker-compose en el VPS
     }
 
     stages {
@@ -43,7 +46,7 @@ pipeline {
             steps {
                 sh '''
                     pip install --upgrade pip
-                    pip install -r requirements.txt  # Asegurar que las dependencias están instaladas en el contenedor de pruebas
+                    pip install -r requirements.txt
                     python3 manage.py test
                 '''
             }
@@ -59,6 +62,24 @@ pipeline {
                             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
                             docker push $IMAGE_NAME
                             docker rmi $IMAGE_NAME
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to VPS') {
+            agent any
+            steps {
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'vps-ssh-credentials', keyFileVariable: 'SSH_KEY')]) {
+                        sh '''
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
+                                cd $PROJECT_PATH
+                                docker-compose down
+                                docker pull $IMAGE_NAME
+                                docker-compose up -d --build
+                            EOF
                         '''
                     }
                 }
