@@ -3,9 +3,9 @@ pipeline {
 
     environment {
         IMAGE_NAME = "joseantoniocgonzalez/django-polls"
-        VPS_USER = "jose"
-        VPS_HOST = "217.72.207.210"
-        PROJECT_PATH = "/home/jose/app"
+        VPS_USER = "jose"  // Usuario correcto del VPS
+        VPS_HOST = "217.72.207.210"  // IP del VPS
+        PROJECT_PATH = "/home/jose/app"  // Ruta donde está docker-compose en el VPS
     }
 
     stages {
@@ -53,11 +53,7 @@ pipeline {
         }
 
         stage('Build and Push Docker Image') {
-            agent {
-                node {
-                    label 'master'
-                }
-            }
+            agent any
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
@@ -73,39 +69,18 @@ pipeline {
         }
 
         stage('Deploy to VPS') {
-            agent {
-                node {
-                    label 'master'
-                }
-            }
+            agent any
             steps {
                 script {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'vps-ssh-credentials', keyFileVariable: 'SSH_KEY')]) {
-                        sh '''
-                            echo "🔍 Verificando conexión SSH con $VPS_USER@$VPS_HOST"
-                            ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
-                                echo "🛠️ Desplegando en el VPS..."
-                                cd $PROJECT_PATH
-
-                                # 🔍 Verifica si el archivo docker-compose.yaml existe
-                                if [ ! -f docker-compose.yaml ]; then
-                                    echo "❌ ERROR: No se encontró el archivo docker-compose.yaml en $PROJECT_PATH"
-                                    exit 1
-                                fi
-
-                                echo "🛑 Deteniendo contenedores antiguos..."
-                                docker-compose down
-
-                                echo "🔄 Descargando la nueva imagen..."
-                                docker pull $IMAGE_NAME
-
-                                echo "🚀 Iniciando nuevo contenedor..."
-                                docker-compose up -d --build
-
-                                echo "✅ Despliegue finalizado correctamente."
-                            EOF
-                        '''
-                    }
+                    sh '''
+                        echo "🔍 Verificando conexión SSH con $VPS_USER@$VPS_HOST"
+                        ssh -i "/var/lib/jenkins/.ssh/id_rsa" -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
+                            cd $PROJECT_PATH
+                            docker-compose down
+                            docker pull $IMAGE_NAME
+                            docker-compose up -d --build
+                        EOF
+                    '''
                 }
             }
         }
