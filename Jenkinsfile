@@ -2,9 +2,7 @@ pipeline {
     agent none
 
     environment {
-        DOCKER_HUB_USER = 'joseantoniocgonzalez'  // 🔴 Corrección: Cambiado el email por el usuario correcto
         IMAGE_NAME = "joseantoniocgonzalez/django-polls"  // 🔴 Asegúrate de que el nombre de la imagen es correcto
-        DOCKER_HUB_PASSWORD = credentials('docker-hub-credentials')
     }
 
     stages {
@@ -52,15 +50,17 @@ pipeline {
         }
 
         stage('Build and Push Docker Image') {
-            agent any  // Permite que esta etapa se ejecute en cualquier nodo disponible
+            agent any
             steps {
                 script {
-                    sh '''
-                        docker build -t $IMAGE_NAME .
-                        echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USER --password-stdin
-                        docker push $IMAGE_NAME
-                        docker rmi $IMAGE_NAME
-                    '''
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+                        sh '''
+                            docker build -t $IMAGE_NAME .
+                            echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+                            docker push $IMAGE_NAME
+                            docker rmi $IMAGE_NAME
+                        '''
+                    }
                 }
             }
         }
