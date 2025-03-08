@@ -53,7 +53,7 @@ pipeline {
 
         stage('Build and Push Docker Image') {
             agent {
-                label 'master'
+                label 'principal'
             }
             steps {
                 script {
