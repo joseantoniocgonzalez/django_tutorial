@@ -81,18 +81,12 @@ pipeline {
                 script {
                     withCredentials([sshUserPrivateKey(credentialsId: 'vps-ssh-credentials', keyFileVariable: 'SSH_KEY')]) {
                         sh '''
+                            echo "🔑 Guardando clave SSH en archivo temporal..."
+                            echo "$SSH_KEY" > /tmp/jenkins_ssh_key
+                            chmod 600 /tmp/jenkins_ssh_key
+
                             echo "🔍 Verificando SSH: Intentando conectar con usuario: $VPS_USER@$VPS_HOST"
-                            echo "🔑 Clave SSH usada por Jenkins: $SSH_KEY"
-
-                            echo "🔍 Verificando si la clave SSH existe en Jenkins..."
-                            if [ ! -f "$SSH_KEY" ]; then
-                                echo "❌ ERROR: No se encontró la clave SSH en Jenkins"
-                                exit 1
-                            fi
-                            echo "✅ Clave SSH encontrada en Jenkins"
-
-                            echo "🚀 Iniciando conexión SSH al VPS..."
-                            ssh -vvv -i $SSH_KEY -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
+                            ssh -vvv -i /tmp/jenkins_ssh_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
                                 echo "✅ Conexión SSH exitosa con el usuario: \$(whoami)"
 
                                 cd $PROJECT_PATH
@@ -107,6 +101,9 @@ pipeline {
 
                                 echo "✅ Despliegue finalizado en el VPS."
                             EOF
+
+                            echo "🗑️ Eliminando clave SSH temporal..."
+                            rm -f /tmp/jenkins_ssh_key
                         '''
                     }
                 }
